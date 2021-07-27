@@ -31,20 +31,21 @@ function ProfileRelationsBox(propriedades) {
 
       <h2 className="smallTitle">
         {propriedades.title} ({ propriedades.items.length })
+        
       </h2>
 
-      <ul>
-        {/* {seguidores.map((item) => {
+      {/* <ul>
+        {seguidores.map((item) => {
           return (
             <li key={item}>
               <a href={`https://github.com/${item}.png`} >
                 <img src={item.image} />
-                <span>{item.title}</span>
+                <span>{item.login}</span>
               </a>
             </li>
           )
-        })} */}
-      </ul>
+        })}
+      </ul> */}
     </ProfileRelationsBoxWrapper>
   
   )
@@ -56,6 +57,8 @@ export default function Home(props) {
   const githubUser = props.githubUser;
 
   const [comunidades, setComunidades] = React.useState([]);
+
+  const [recados, setRecados] = React.useState([]);
 
   const pessoasFavoritas = [
     'omariosouto',
@@ -70,12 +73,13 @@ export default function Home(props) {
 
   React.useEffect(function() {
 
-    fetch('https://api.github.com/users/peas/followers')
+    fetch(`https://api.github.com/users/${githubUser}/followers`)
     .then(function(respostaDoServidor) {
       return respostaDoServidor.json();
     })
     .then(function(respostaCompleta) {
       setSeguidores(respostaCompleta);
+      console.log('seguidores do Fernando' + respostaCompleta)
     })
 
 
@@ -102,6 +106,31 @@ export default function Home(props) {
       console.log(comunidadesVindasDoDato)
       setComunidades(comunidadesVindasDoDato)
     })
+
+
+    fetch('https://graphql.datocms.com/', {
+      method: "POST",
+      headers: {
+        'Authorization': 'da30925f67918090f3f5910548791f',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ "query": `query {
+        allRecados {
+          id
+          recado
+          creatorSlug
+        }
+      }` })
+    })
+    .then((response) => response.json())
+    .then((respostaCompleta) => {
+      const recadosVindosDoDato = respostaCompleta.data.allRecados;
+      console.log(recadosVindosDoDato)
+      setRecados(recadosVindosDoDato)
+    })
+
+
   }, [])
   console.log('seguidores antes do return', seguidores);
   return(
@@ -170,10 +199,99 @@ export default function Home(props) {
 
             </form>
           </Box>
+
+          <Box>
+
+          <h2 className="subTitle">Deixe seu recado</h2>
+            <form onSubmit={function handleCriaRecado(e) {
+              e.preventDefault();
+              const dadosDoForm = new FormData(e.target);
+
+              const recado = {
+                recado: dadosDoForm.get('recado'),
+                creatorSlug: githubUser
+              }
+
+              fetch('/api/recados', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(recado)
+              })
+              .then(async(response) => {
+                const dados = await response.json();
+                console.log(dados.registroCriado);
+                const recado = dados.registroCriado;
+                const recadosAtualizadas = [...recados, recado];
+                setRecados(recadosAtualizadas)
+              })
+
+            }}>
+
+                <div>
+                  <input
+                    placeholder="Escreva o seu recado"
+                    name="recado"
+                    aria-label="Escreva o seu recado"
+                    type="text"
+                  />
+                </div>
+
+                <button>
+                  Criar recado
+                </button>
+
+            </form>
+
+          </Box>
+
+          <Box >
+            <h2 className="subTitle">Recados..</h2>
+
+            <div>
+              <ul >
+                {recados.map((item) => {
+                  return (
+                    <li key={item.id} style={{ listStyle:'none', marginTop:'15px', background:'rgba(0,0,0,.07)', borderRadius:'10px', padding:'15px'}}>
+                      <div style={{ display:'flex', alignItems:'center', marginBottom:'20px'}}>
+                        <img src={`https://github.com/${item.creatorSlug}.png`} style={{width:'60px', height:'60px', borderRadius:'50%', marginRight:'20px'}} />
+                        <h4>{item.creatorSlug}</h4>
+                      </div>
+                      <span>{item.recado}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+              
+            </div>
+          </Box>
         </div>
         <div className="profileRelationsArea" style={{ gridArea: 'profileRelationsArea' }}>
           
-          <ProfileRelationsBox title="Seguidores" items={seguidores}  />
+          {/* <ProfileRelationsBox title="Seguidores" items={seguidores}  />
+         */}
+
+
+          <ProfileRelationsBoxWrapper>
+
+          <h2 className="smallTitle">
+            Seguidores ({ seguidores.length })
+          </h2>
+
+          <ul>
+            {seguidores.map((item) => {
+              return (
+                <li key={item.id}>
+                  <a target="_blank" href={`https://github.com/${item.login}`} >
+                    <img src={`https://github.com/${item.login}.png`} />
+                    <span>{item.login}</span>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+          </ProfileRelationsBoxWrapper>
           
           <ProfileRelationsBoxWrapper>
 
