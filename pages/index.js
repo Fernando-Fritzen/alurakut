@@ -280,7 +280,7 @@ export default function Home(props) {
           </h2>
 
           <ul>
-            {seguidores.map((item) => {
+            {seguidores.slice(0,6).map((item) => {
               return (
                 <li key={item.id}>
                   <a target="_blank" href={`https://github.com/${item.login}`} >
